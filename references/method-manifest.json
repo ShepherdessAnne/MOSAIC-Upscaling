@@ -1,0 +1,166 @@
+{
+  "artifact_kind": "method_manifest",
+  "protocol": "generative_section_upscaling",
+  "protocol_version": "1.1",
+  "name": "Generative Section Upscaling",
+  "purpose": "Allocate native generative-editing resolution to semantic sections, then reconstruct a larger image while preserving source geometry and protected content.",
+  "binding": "Image-independent. Bind the source, desired scale, section coordinates, references, invariants, and any requested content corrections in a separate job plan.",
+  "artifacts": {
+    "method_manifest": "Reusable procedure and defaults; contains no particular image or run.",
+    "job_plan": "Per-image inputs and coordinates, supplied by the operator.",
+    "render_records": "Per-job source digest, prepared inputs, requested changes, render paths, review decisions, and contract digest.",
+    "assembly_report": "Per-job output dimensions, alignment measurements, protected regions, and checks."
+  },
+  "defaults": {
+    "intent": "upscale_only",
+    "content_policy": "preserve_source",
+    "corrections": [],
+    "partitioning": {
+      "strategy": "semantic_sections",
+      "guard_band_fraction": 0.1,
+      "keep_connected_components_together": true,
+      "allow_cell_atlases": true
+    },
+    "generation": {
+      "provider": "available_native_image_editor",
+      "reference_roles": [
+        "section_edit_target",
+        "full_source_context"
+      ],
+      "preserve_layout": true,
+      "preserve_proportions": true,
+      "retain_material_gradients": true
+    },
+    "protected_content": {
+      "typography": "deterministic_overlay",
+      "alpha": "preserve_source_coverage",
+      "other_regions": "job_defined"
+    },
+    "registration": {
+      "enabled": true,
+      "source_pixel_displacement_limit": 8,
+      "allow_disable_per_section": true,
+      "rigid_connections_require_visual_review": true,
+      "corrected_section_default": "disabled unless explicitly enabled in the job"
+    },
+    "blending": {
+      "color_match_strength": 0.45,
+      "low_frequency_radius_source_px": 12,
+      "large_section_feather_source_px": 12,
+      "small_cell_feather_source_px": 5,
+      "corrected_section_color_match_strength": 0
+    },
+    "review": {
+      "construction_before_finish": true,
+      "matched_scale_comparison": true,
+      "unreviewed_renders": "reject",
+      "changed_render_contract": "invalidate_review"
+    }
+  },
+  "input_contract": {
+    "required_when_bound": [
+      "source",
+      "target",
+      "sections"
+    ],
+    "job_only": [
+      "source_identity",
+      "dimensions",
+      "coordinates",
+      "section_ids",
+      "content_invariants",
+      "context_references",
+      "corrections",
+      "render_files",
+      "measurements"
+    ],
+    "coordinate_system": "Integer source-pixel rectangles [left, top, right, bottom], right and bottom exclusive.",
+    "correction_modes": [
+      "upscale_only",
+      "upscale_with_corrections"
+    ]
+  },
+  "workflow": [
+    {
+      "id": "bind",
+      "action": "Resolve the authoritative source and requested output. Record identity, digest, and source dimensions."
+    },
+    {
+      "id": "map",
+      "action": "Create semantic sections with context and overlapping guard bands; map protected typography and other content. Keep connected mechanisms or identity features together."
+    },
+    {
+      "id": "scope",
+      "action": "Derive invariants from the current source. Default to source-preserving enlargement. Put explicitly requested design or content changes in the separate corrections list and select upscale_with_corrections."
+    },
+    {
+      "id": "prepare",
+      "action": "Prepare immutable section or atlas inputs. Save their coordinate mapping and a digest of the render contract."
+    },
+    {
+      "id": "render",
+      "action": "Use each section as the edit target and the full source as context. Request greater detail with unchanged framing, layout, proportions and materials; include only corrections explicitly assigned to that section."
+    },
+    {
+      "id": "review",
+      "action": "Compare the result with its source at matched scale. Trace important connections, check content counts, identity, expression, silhouette and material continuity, then inspect surface finish. Record acceptance and actual output size."
+    },
+    {
+      "id": "repair",
+      "action": "Re-render a failed section or make a narrowly scoped repair. Retain the prior accepted version and record the change. Invalidate affected reviews when the source, crop, invariants or correction instructions change."
+    },
+    {
+      "id": "assemble",
+      "action": "Map accepted outputs back to the original coordinate system. Optionally apply bounded alignment, broad illumination matching and overlap feathering. Restore protected content last. For explicitly corrected sections, disable source-based warping and color matching by default so assembly does not undo the requested change; the job may enable either after review."
+    },
+    {
+      "id": "verify",
+      "action": "Inspect the full composition and critical close-ups. Check dimensions, seams, rigid connections, alpha, protected pixels and every requested correction."
+    },
+    {
+      "id": "deliver",
+      "action": "Save the finished image, optional comparison and per-job records. Keep this reusable method manifest separate from those run records."
+    }
+  ],
+  "prompt_contract": {
+    "edit_target": "Prepared section or cell atlas.",
+    "context": "Complete current source; optional authoritative structural reference.",
+    "instruction": "Enlarge the edit target with finer material and surface detail. Preserve exact crop, layout, pose, proportions, palette, connections and current-image invariants. Apply only explicitly listed section corrections. Keep atlas order and blank padding unchanged.",
+    "section_invariants": "Read from the bound job, never from a previous image or example.",
+    "section_corrections": "Empty in upscale_only mode; otherwise read only explicitly assigned job corrections."
+  },
+  "acceptance_rules": [
+    "No missing or extra components relative to the source and explicitly requested corrections.",
+    "Connected parts remain connected and retain their intended orientation.",
+    "No unexplained content or identity changes.",
+    "Protected pixels and alpha meet the job's preservation requirements.",
+    "Actual output dimensions and section sizes are measured.",
+    "Acceptance is based on inspected artifacts, never on attractiveness or low source error alone."
+  ],
+  "budget_accounting": {
+    "section_linear_gain": "actual_render_width / source_section_width",
+    "reported_totals": [
+      "source_pixels",
+      "actual_returned_pixels_per_section",
+      "sum_of_returned_primary_pixels",
+      "final_canvas_pixels"
+    ],
+    "annotation": "Include atlas padding, overlap and repair passes in the recorded accounting. Read actual generator output dimensions at runtime."
+  },
+  "executor": {
+    "prepare": "python scripts/sections.py prepare JOB.json SECTION_DIRECTORY",
+    "records": "SECTION_DIRECTORY/render-records.json",
+    "assemble": "python scripts/sections.py assemble JOB.json SECTION_DIRECTORY FINAL.png --scale SCALE"
+  },
+  "validation_rules": [
+    "A method manifest is not an image job; never execute it as a bound job.",
+    "An unbound job template must be filled before preparation.",
+    "upscale_only jobs have an empty corrections list.",
+    "Every correction has an id, instruction and target section_ids.",
+    "Changed render contracts cannot reuse accepted render records.",
+    "Assembly-only changes such as feathering or protected overlays do not silently alter the render contract.",
+    "Validate bound jobs against the supplied job schema before opening source files.",
+    "Re-preparation retains reviewed renders whose per-section render contract is unchanged and archives prior records."
+  ],
+  "job_schema_ref": "job.schema.json"
+}
