@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "Please cite the MOSAIC paper when using or discussing this method. Licensed under MPCLA-1.0; see LICENSE.md for permissions and restrictions."
+title: "MOSAIC Upscaling: Model-Orchestrated Semantic Amplification via Image Compositing"
+authors:
+  - family-names: Shepherdess
+version: 0.2.0
+date-released: 2026-11-24
+keywords:
+  - super-resolution
+  - generative image editing
+  - semantic tiling
+  - compositing
+preferred-citation:
+  type: unpublished
+  title: "MOSAIC: Model-Orchestrated Semantic Amplification via Image Compositing: Source-Authoritative Generative Super-Resolution with Black-Box Image Editors"
+  authors:
+    - family-names: Shepherdess
+  year: 2026
+  notes: "Research preprint, version 0.2."

@@ -1,0 +1,15 @@
+{
+  "artifact_kind": "job_plan",
+  "protocol": "generative_section_upscaling",
+  "protocol_version": "1.1",
+  "binding_status": "unbound",
+  "intent": "upscale_only",
+  "source": null,
+  "target": {
+    "scale": 4
+  },
+  "atlas_background": "#000000",
+  "protected_rects": [],
+  "sections": [],
+  "corrections": []
+}

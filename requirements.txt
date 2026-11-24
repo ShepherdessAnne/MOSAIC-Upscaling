@@ -1,0 +1,4 @@
+Pillow
+numpy
+jsonschema
+opencv-python-headless
