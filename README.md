@@ -9,12 +9,14 @@ MOSAIC separates regional generative rendering from authority over the final ima
 
 ## Research release v0.2
 
-- [Research manuscript (LaTeX)](paper/MOSAIC_v0.2.tex). The compiled PDF is pending upload.
-- Original protocol 1.1 files: [workflow](Generative_Upscaling_Workflow.md), [schema](references/job.schema.json), [executor](scripts/sections.py) and [agent skill](SKILL.md).
+- [Research manuscript (LaTeX)](paper/MOSAIC_v0.2.tex). The compiled PDF is pending upload; the full manuscript is available as source.
+- Original protocol 1.1 files: [workflow](Generative_Upscaling_Workflow.md), [method manifest](Generative_Upscaling_Method_Manifest.json), [schema](references/job.schema.json), [executor](scripts/sections.py) and [agent skill](SKILL.md).
 - [Original setup instructions](ORIGINAL_README.md).
 - [Synthetic tests](tests/test_executor.py) and [recorded results](tests/results.txt).
 
 The original executor is unchanged. This release establishes five expected behavior checks and reproduces three known defects. It does not establish superiority in generative quality. The external image editor is not included.
+
+[Original archive checksums](SHA256SUMS.txt) record the licensed distribution package, including its original README and compiled PDF; the repository README is updated for publication.
 
 ## Reproduce checks
 
