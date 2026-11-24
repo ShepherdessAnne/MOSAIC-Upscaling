@@ -69,6 +69,13 @@ def prepare(plan_path,directory):
             old_hash=hashlib.sha256(records_path.read_bytes()).hexdigest()
             (history/(old_hash+'.json')).write_text(json.dumps(previous,indent=2))
     previous_sections={s['id']:s for s in previous.get('sections',[])}
+    # The deterministic master (fitment): one classical upscale of the whole
+    # source at the job's target scale. Tiles are cut from this, never from
+    # the low-res source. Atlas sections keep their own packing (see the
+    # paper's generative-atlasing allocation), but their cells are also
+    # sourced from the master below.
+    scale=int(p.get('target',{}).get('scale',1))
+    master=source.resize((source.width*scale,source.height*scale),Image.Resampling.LANCZOS) if scale>1 else source.copy()
     for s in p['sections']:
         entry={'id':s['id'],'render_contract_sha256':section_contract(p,digest,s),'invariants':s.get('invariants',[]),'requested_corrections':[c for c in p.get('corrections',[]) if s['id'] in c['section_ids']],'accepted':False}
         old=previous_sections.get(s['id'],{})
@@ -81,16 +88,23 @@ def prepare(plan_path,directory):
             canvas=Image.new(mode,(cw*columns,ch*rows),(0,0,0,0) if has_alpha else p.get('atlas_background','#00101f'))
             placements=[]
             for i,c in enumerate(s['cells']):
-                im=source.crop(c['box']).convert(mode)
+                im=master.crop(tuple(v*scale for v in c['box'])).convert(mode)
                 im=ImageOps.contain(im,(cw-8,ch-8),Image.Resampling.LANCZOS)
                 x=(i%columns)*cw+(cw-im.width)//2;y=(i//columns)*ch+(ch-im.height)//2
                 canvas.paste(im,(x,y))
                 placements.append({'box':c['box'],'atlas_box':[x,y,x+im.width,y+im.height],'name':c.get('name',str(i))})
             entry.update({'cells':placements,'input_size':list(canvas.size)})
         else:
-            canvas=source.crop(s['box']).convert(mode)
-            factor=min(s.get('preview_long_edge',1536)/max(canvas.size),4)
-            canvas=canvas.resize(tuple(max(1,round(v*factor)) for v in canvas.size),Image.Resampling.LANCZOS)
+            # Fitment-first (method order, fixed 2026-11-24): the whole source
+            # is standard-upscaled ONCE at the job's uniform target scale and
+            # section tiles are cut from that master. The previous code cropped
+            # the low-res source first and resized each crop separately, capped
+            # at a 1536px long edge, which handed every section a different
+            # effective scale (measured at nominal 3x: 2.24x/2.90x/2.72x/2.48x).
+            # The classical filter is linear, so interiors agree either way;
+            # the generative step that consumes these inputs is not, and it
+            # must receive every tile at the same uniform scale.
+            canvas=master.crop(tuple(v*scale for v in s['box'])).convert(mode)
             entry.update({'box':s['box'],'input_size':list(canvas.size)})
         filename=directory/(s['id']+'_input.png');canvas.save(filename)
         entry['input']=str(filename.resolve());manifest['sections'].append(entry)

@@ -4,10 +4,11 @@ test_atlas_background_hash_omission_observed (__main__.ExecutorTests.test_atlas_
 test_cache_reuse_selective_invalidation (__main__.ExecutorTests.test_cache_reuse_selective_invalidation) ... ok
 test_corrections_default_disable_matching (__main__.ExecutorTests.test_corrections_default_disable_matching) ... ok
 test_overlap_order_dependence_observed (__main__.ExecutorTests.test_overlap_order_dependence_observed) ... ok
+test_prepare_cuts_tiles_from_fitment (__main__.ExecutorTests.test_prepare_cuts_tiles_from_fitment) ... ok
 test_protection_alpha_and_dimensions (__main__.ExecutorTests.test_protection_alpha_and_dimensions) ... ok
 test_unaccepted_blocks_assembly (__main__.ExecutorTests.test_unaccepted_blocks_assembly) ... ok
 
 ----------------------------------------------------------------------
-Ran 8 tests in 1.025s
+Ran 9 tests in 0.814s
 
 OK
