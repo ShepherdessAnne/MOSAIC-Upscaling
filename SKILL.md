@@ -22,6 +22,16 @@ Default to `intent: upscale_only` and `corrections: []`. Preserve the current so
 
 When the user requests a design or content correction, select `upscale_with_corrections`. Record each exact requested change, its id and target section ids. Apply only those assigned changes. Record corrections separately from generated surface detail so a later inspection can trace their origin. Use existing authorization; do not introduce a new confirmation step for a correction the user already requested.
 
+## Fitment — the classical master comes first
+
+Order is spec, not preference: **standard-upscale the whole source first, at one uniform scale; segment afterwards.** Tiles are cut from the fitment, never from the low-res source. (Known divergence, found 2026-11-24 and sideboarded: `scripts/sections.py prepare()` crops first and caps each tile at 1536 long edge, which hands each tile a different scale — 2.24×/2.90×/2.72×/2.48× at nominal 3×. The classical filter itself is order-insensitive — interiors bit-identical either way — but the generative step is not, so per-tile scale inconsistency is the real defect. Until `prepare()` is fixed, cut tiles from the fitment directly.)
+
+**Default fitment: the SGSR hybrid** (Shepherdess's ruling, 2026-11-24) — Qualcomm SGSR 1 reconstruction blended through NVIDIA NIS's own edge gate (m = Σw of the NIS directional weights): Y = (1 − m)·SGSR1 + m·NIS. It is the best non-Waifu fitment as a detail map for the tile-generation stage; plain SGSR 1 is the pick when the fitment itself is the human-facing image. Lanczos remains the deterministic baseline. Full experiment record: [references/fitment-methods.md](references/fitment-methods.md).
+
+**Fitment choice gate:** before building the fitment, ask the user **fast or best?** Fast = the default SGSR hybrid (seconds). Best = Waifu2x (cunet, no-denoise) finished with NIS at 1.5× (in-spec; NVSharpen finish wins under 100% scrutiny, NIS finish at viewing size). Waifu is optional by design — seconds on a local GPU, ~196 s per sheet under software Vulkan on a cloud CPU-only host — and is never the silent default.
+
+Verdict discipline from the 2026-11-24 experiments: comparison boards are 100% crops (maximum scrutiny) — state the display size when stating a winner; a fitment has two consumers (human eyes, AI detail map) — state the consumer when stating the best. Temporal upscalers (FSR 2/3, XeSS, SGSR 2) cannot serve as fitments for stills: their extra detail is new scene samples, and a bitmap can only be resampled.
+
 ## Execute
 
 1. Resolve the authoritative source, identity/version and digest. Set the requested final scale in the bound job.
