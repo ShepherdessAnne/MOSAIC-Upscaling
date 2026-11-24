@@ -37,6 +37,20 @@ class ExecutorTests(unittest.TestCase):
         self.src.convert('RGB').save(self.d/'source.png'); r=self.prep(); self.p['atlas_background']='#ffffff'; q=self.prep(); self.assertEqual(r['render_contract_sha256'],q['render_contract_sha256'])
     def test_accepted_file_mutation_observed(self):
         r=self.prep(); self.accept(r); a=self.assemble(); Image.new('RGB',tuple(r['sections'][0]['input_size']),(0,0,255)).save(self.records/'a.png'); b=self.assemble(); self.assertFalse(np.array_equal(a,b))
+    def test_prepare_cuts_tiles_from_fitment(self):
+        # Regression (2026-11-24): tiles must be cut from the whole-source
+        # fitment at the job's uniform target scale (2x here), not cropped
+        # from the low-res source and resized per-section under a 1536 cap.
+        r=self.prep()
+        a=[e for e in r['sections'] if e['id']=='a'][0]
+        self.assertEqual(a['input_size'],[56,48])  # box 28x24 at uniform 2x
+        fitment=self.src.resize((96,64),Image.Resampling.LANCZOS).crop((8,8,64,56))
+        prepared=Image.open(a['input'])
+        np.testing.assert_array_equal(np.array(prepared),np.array(fitment))
+        # Crop-first preparation differs from the fitment at the tile edges;
+        # the prepared input must be the fitment's pixels, not the crop's.
+        crop_first=self.src.crop((4,4,32,28)).resize((56,48),Image.Resampling.LANCZOS)
+        self.assertFalse(np.array_equal(np.array(prepared),np.array(crop_first)))
     def test_corrections_default_disable_matching(self):
         self.p['intent']='upscale_with_corrections'; self.p['corrections']=[{'id':'c','instruction':'change color','section_ids':['a']}]; del self.p['sections'][0]['color_match']; self.accept(self.prep()); self.assemble(); report=json.loads((self.d/'out.json').read_text()); self.assertEqual(report['sections'][0]['color_match_strength'],0)
 
